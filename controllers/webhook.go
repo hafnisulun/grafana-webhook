@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 )
 
 type WebhookController struct{}
@@ -49,7 +50,7 @@ type ReqBody struct {
 func (r WebhookController) Whatsapp(c *gin.Context) {
 	var webhookNotifierBody WebhookNotifierBody
 
-	if err := c.BindJSON(&webhookNotifierBody); err != nil {
+	if err := c.ShouldBindWith(&webhookNotifierBody, binding.JSON); err != nil {
 		log.Println("[Error] Request body not match, err:", err)
 		c.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{
 			"error": "Unprocessable entity",
