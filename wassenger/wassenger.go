@@ -139,12 +139,18 @@ func (r Wassenger) Webhook(c *gin.Context) {
 	log.Println("Request body:", string(byteRequestBody))
 
 	for _, messageEvent := range requestBody {
+		color := "good"
+
+		if messageEvent.Data.DeliveryStatus == "failed" {
+			color = "danger"
+		}
+
 		slackRequestBody := &slackRequestBody{
 			Attachments: []slackAttachment{
 				{
 					Fallback: messageEvent.Message,
 					Pretext:  messageEvent.Message,
-					Color:    "good",
+					Color:    color,
 					Fields: []slackField{
 						{
 							Title: "Account",
