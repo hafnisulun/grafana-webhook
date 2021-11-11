@@ -20,7 +20,7 @@ func main() {
 	webhookController := new(controllers.WebhookController)
 	router.POST("webhook/whatsapp", webhookController.Whatsapp)
 
-	wassenger := new(wassenger.Wassanger)
+	wassenger := new(wassenger.Wassenger)
 	router.POST("wassenger/webhook", wassenger.Webhook)
 
 	log.Fatal(router.Run())

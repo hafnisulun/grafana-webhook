@@ -12,11 +12,7 @@ import (
 	"github.com/gin-gonic/gin/binding"
 )
 
-type Wassanger struct{}
-
-type param struct {
-	Token string `form:"token"`
-}
+type Wassenger struct{}
 
 type schedule struct {
 	Enabled bool `json:"enabled"`
@@ -42,6 +38,11 @@ type data struct {
 	Schedule       schedule `json:"schedule"`
 	Retry          retry    `json:"retry"`
 	Device         string   `json:"device"`
+}
+
+type requestParams struct {
+	Token   string `form:"token"`
+	Account string `form:"account"`
 }
 
 type requestBody []messageEvent
@@ -76,10 +77,10 @@ type slackRequestBody struct {
 
 // POST wassenger/webhook
 // Webhook from Wassenger
-func (r Wassanger) Webhook(c *gin.Context) {
-	var param param
+func (r Wassenger) Webhook(c *gin.Context) {
+	var requestParams requestParams
 
-	if err := c.ShouldBindQuery(&param); err != nil {
+	if err := c.ShouldBindQuery(&requestParams); err != nil {
 		log.Println("[Error] Request params not match, err:", err)
 		c.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{
 			"error": "Unprocessable entity",
@@ -87,10 +88,28 @@ func (r Wassanger) Webhook(c *gin.Context) {
 		return
 	}
 
-	log.Println("token:", param.Token)
+	byteRequestParams, err := json.Marshal(requestParams)
 
-	if param.Token != os.Getenv("APP_TOKEN") {
+	if err != nil {
+		log.Println("[Error] Marshal request params failed, err:", err)
+		c.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{
+			"error": "Unprocessable entity",
+		})
+		return
+	}
+
+	log.Println("Request params:", string(byteRequestParams))
+
+	if requestParams.Token != os.Getenv("APP_TOKEN") {
 		log.Println("[Error] Token not match")
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+			"error": "Forbidden",
+		})
+		return
+	}
+
+	if requestParams.Account == "" {
+		log.Println("[Error] Account empty")
 		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
 			"error": "Forbidden",
 		})
@@ -107,7 +126,17 @@ func (r Wassanger) Webhook(c *gin.Context) {
 		return
 	}
 
-	log.Println("requestBody:", requestBody)
+	byteRequestBody, err := json.Marshal(requestBody)
+
+	if err != nil {
+		log.Println("[Error] Marshal request params failed, err:", err)
+		c.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{
+			"error": "Unprocessable entity",
+		})
+		return
+	}
+
+	log.Println("Request body:", string(byteRequestBody))
 
 	for _, messageEvent := range requestBody {
 		slackRequestBody := &slackRequestBody{
@@ -118,6 +147,11 @@ func (r Wassanger) Webhook(c *gin.Context) {
 					Color:    "good",
 					Fields: []slackField{
 						{
+							Title: "Account",
+							Value: requestParams.Account,
+							Short: true,
+						},
+						{
 							Title: "Phone",
 							Value: messageEvent.Data.Phone,
 							Short: true,
@@ -125,6 +159,11 @@ func (r Wassanger) Webhook(c *gin.Context) {
 						{
 							Title: "Status",
 							Value: messageEvent.Data.Status,
+							Short: true,
+						},
+						{
+							Title: "Message",
+							Value: messageEvent.Data.Message,
 							Short: true,
 						},
 					},
@@ -135,7 +174,7 @@ func (r Wassanger) Webhook(c *gin.Context) {
 		payloadBuf := new(bytes.Buffer)
 		json.NewEncoder(payloadBuf).Encode(slackRequestBody)
 
-		log.Println("Request: " + payloadBuf.String())
+		log.Println("Slack request body: " + payloadBuf.String())
 
 		res, err := http.Post(os.Getenv("SLACK_WEBHOOK_URL"), "application/json", payloadBuf)
 
@@ -160,7 +199,8 @@ func (r Wassanger) Webhook(c *gin.Context) {
 		}
 
 		resBodyString := string(resBodyBytes)
-		log.Println("Response: " + resBodyString)
+		log.Printf("Slack response code: %d\n", res.StatusCode)
+		log.Println("Slack response body: " + resBodyString)
 	}
 
 	response := gin.H{
