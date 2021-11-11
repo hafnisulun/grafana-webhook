@@ -168,9 +168,34 @@ func (r Wassenger) Webhook(c *gin.Context) {
 							Short: true,
 						},
 						{
+							Title: "Delivery status",
+							Value: messageEvent.Data.DeliveryStatus,
+							Short: true,
+						},
+						{
+							Title: "Created at",
+							Value: messageEvent.Data.CreatedAt,
+							Short: true,
+						},
+						{
+							Title: "Processed at",
+							Value: messageEvent.Data.ProcessedAt,
+							Short: true,
+						},
+						{
+							Title: "Sent at",
+							Value: messageEvent.Data.SentAt,
+							Short: true,
+						},
+						{
+							Title: "Failed at",
+							Value: messageEvent.Data.FailedAt,
+							Short: true,
+						},
+						{
 							Title: "Message",
 							Value: messageEvent.Data.Message,
-							Short: true,
+							Short: false,
 						},
 					},
 				},
