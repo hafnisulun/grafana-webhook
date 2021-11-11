@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/hafnisulun/grafana-webhook/controllers"
+	"github.com/hafnisulun/grafana-webhook/wassenger"
 	_ "github.com/joho/godotenv/autoload"
 )
 
@@ -18,6 +19,9 @@ func main() {
 
 	webhookController := new(controllers.WebhookController)
 	router.POST("webhook/whatsapp", webhookController.Whatsapp)
+
+	wassenger := new(wassenger.Wassanger)
+	router.POST("wassenger/webhook", wassenger.Webhook)
 
 	log.Fatal(router.Run())
 }
